@@ -12,5 +12,5 @@ class User(BaseModel):
     id: int = None
     username: str
     password: str
-    email: str = Query(..., regex=r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
+    email: str = None  #Query(..., regex=r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
     role: Role = Role.personal
