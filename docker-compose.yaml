@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:12-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=app
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=superS3cretpassw0rd
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+      - ./database_scripts:/docker-entrypoint-initdb.d/
