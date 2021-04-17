@@ -4,8 +4,8 @@ import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
-from starlette.status import HTTP_401_UNAUTHORIZED
-from models.user import User
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
+from models.user import User, Role
 from utils.db_functions import db_get_user
 from utils.const import (
     JWT_EXPIRATION_TIME_MINUTES,
@@ -80,10 +80,12 @@ async def verify_jwt_user(jwt_token: str):
         print(f"Error checking JWT: {e}")
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
+
 async def check_optional_jwt_token(jwt_token: str = Depends(optional_oauth_schema)):
     """ Check whether optional JWT token is correct. """
     user = await verify_jwt_user(jwt_token)
     return user
+
 
 async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
     """ Check whether JWT token is correct """
@@ -95,7 +97,12 @@ async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
     return user
 
 
-def final_checks(username: str):
-    """ Last checking and returning the final result """
-    # Perform any extra checks here
-    return True
+def validate_admin(user: User, raise_exceptions=True):
+    """ Check if user has admin role """
+    is_admin = False
+    if user and user.role == Role.admin.value:
+        is_admin = True
+    else:
+        if raise_exceptions:
+            raise HTTPException(status_code=HTTP_403_FORBIDDEN)
+    return is_admin

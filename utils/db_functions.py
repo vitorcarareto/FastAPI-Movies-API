@@ -1,7 +1,8 @@
 from asyncpg.exceptions import UniqueViolationError
 from utils.db import execute, fetch
+from utils.db_object import db
 from models.user import User
-from models.movie import Movie
+from models.movie import Movie, MovieLog
 
 
 async def db_get_user(username: str):
@@ -106,3 +107,50 @@ async def db_insert_movie(movie: Movie):
         return db_movie
     except UniqueViolationError as e:
         print(f"Already exists: {e}")
+
+
+@db.transaction()
+async def db_update_movie(movie: Movie, field_name: str, new_value):
+    values = {"value": new_value, "movie_id": movie.id}
+    query = f"""
+        update movies
+        set {field_name} = :value
+        where id = :movie_id
+        returning id
+    """
+
+    try:
+        old_value = getattr(movie, field_name)
+        if str(old_value) != str(new_value):
+            log_values = {
+                "movie_id": movie.id,
+                "updated_field": field_name,
+                "old_value": old_value,
+                "new_value": str(new_value)
+            }
+            log_query = f"""
+                insert into movies_log (movie_id, updated_field, old_value, new_value)
+                values (:movie_id, :updated_field, :old_value, :new_value)
+            """
+            await execute(query, False, values)  # Update movie
+            await execute(log_query, False, log_values)  # Log updated field and values
+            setattr(movie, field_name, new_value)
+
+        return movie
+    except Exception as e:
+        print(f"Error updating movie {movie.id}: {e}")
+
+
+async def db_delete_movie(movie_id: int):
+    values = {"movie_id": movie_id}
+    query = """
+        delete from movies
+        where id = :movie_id
+        returning id
+    """
+
+    try:
+        movie_id = await execute(query, False, values)
+        return movie_id
+    except Exception as e:
+        print(f"Error deleting movie {movie_id}: {e}")
