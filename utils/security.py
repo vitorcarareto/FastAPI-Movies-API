@@ -5,11 +5,15 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from starlette.status import HTTP_401_UNAUTHORIZED
-from utils.const import JWT_EXPIRATION_TIME_MINUTES, JWT_SECRET_KEY, JWT_ALGORITHM
 from models.user import User
-
-
-jwt_fake_user = User(**{"username": "vitorcarareto", "password": "$2b$12$eJO.75FBs98nmww2wz0cyu22aq3vGTeanm4wEeUKIRDq4YlbmmZNy", "email": "vitor.carareto@gmail.com"})  # TODO Remove
+from utils.db_functions import db_get_user, db_check_user
+from utils.const import (
+    JWT_EXPIRATION_TIME_MINUTES,
+    JWT_ALGORITHM,
+    JWT_SECRET_KEY,
+    JWT_EXPIRED_MSG,
+    JWT_INVALID_MSG,
+)
 
 
 pwd_context = CryptContext(schemes=["bcrypt"])
@@ -29,11 +33,14 @@ def verify_password(plain_password, hashed_password):
     return False
 
 
-def authenticate_user(user: User):
+async def authenticate_user(username, password):
     """ Authenticate username and password to give JWT token """
-    if user.username == jwt_fake_user.username:
-        if verify_password(user.password, jwt_fake_user.password):
-            return user
+    db_user = await db_get_user(username)
+    plain_password = password
+    hashed_password = db_user.password
+
+    if verify_password(plain_password, hashed_password):
+        return db_user
 
     return None
 
@@ -50,15 +57,24 @@ def create_jwt_token(user: User):
     return jwt_token
 
 
-def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
+async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
     """ Check whether JWT token is correct """
     try:
         jwt_payload = jwt.decode(jwt_token, JWT_SECRET_KEY, algorithms=JWT_ALGORITHM)
         username = jwt_payload.get("sub")
         expiration = jwt_payload.get("exp")
         if time.time() < expiration:
-            if jwt_fake_user.username == username:
+            user_exists = await db_check_user(username)
+            if user_exists:
                 return final_checks(username)
+            else:
+                raise HTTPException(
+                    status_code=HTTP_401_UNAUTHORIZED, detail=JWT_INVALID_MSG
+                )
+        else:
+            raise HTTPException(
+                status_code=HTTP_401_UNAUTHORIZED, detail=JWT_EXPIRED_MSG
+            )
 
     except Exception as e:
         print(f"Error checking JWT: {e}")
@@ -66,6 +82,6 @@ def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
 
 
 def final_checks(username: str):
-    """ Last checking and returning final result """
+    """ Last checking and returning the final result """
     # Perform any extra checks here
     return True

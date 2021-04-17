@@ -1,6 +1,5 @@
 from enum import Enum
-from fastapi import Query
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 
 class Role(Enum):
@@ -11,6 +10,18 @@ class Role(Enum):
 class User(BaseModel):
     id: int = None
     username: str
+    email: EmailStr = None
     password: str
-    email: str = None  #Query(..., regex=r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
     role: Role = Role.personal
+
+    def serialize(self, safe=True):
+        """ Serialize the object in a dictionary. """
+        d = self.dict()
+        if safe:  # Drop sensitive data
+            d.pop('password')
+            d.pop('role')
+
+        if d.get('role'):
+            d['role'] = self.role.value
+
+        return d

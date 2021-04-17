@@ -26,10 +26,10 @@ async def fetch(query, is_one, values):
 
     if is_one:
         result = await db.fetch_one(query=query, values=values)
-        output = dict(result)
+        output = dict(result) if result else None
     else:
         result = await db.fetch_all(query=query, values=values)
-        output = [dict(row) for row in result]
+        output = [dict(row) for row in result] if result else None
 
     await disconnect_db(db)
     return output
