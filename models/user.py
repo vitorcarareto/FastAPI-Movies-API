@@ -14,14 +14,5 @@ class User(BaseModel):
     password: str
     role: Role = Role.personal
 
-    def serialize(self, safe=True):
-        """ Serialize the object in a dictionary. """
-        d = self.dict()
-        if safe:  # Drop sensitive data
-            d.pop('password')
-            d.pop('role')
-
-        if d.get('role'):
-            d['role'] = self.role.value
-
-        return d
+    class Config:
+        use_enum_values = True

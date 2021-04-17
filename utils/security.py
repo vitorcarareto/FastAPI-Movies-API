@@ -64,18 +64,16 @@ async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
         username = jwt_payload.get("sub")
         expiration = jwt_payload.get("exp")
         if time.time() < expiration:
-            user_exists = await db_check_user(username)
-            if user_exists:
-                return final_checks(username)
-            else:
+            user = await db_get_user(username)
+            if not user:
                 raise HTTPException(
                     status_code=HTTP_401_UNAUTHORIZED, detail=JWT_INVALID_MSG
                 )
+            return user
         else:
             raise HTTPException(
                 status_code=HTTP_401_UNAUTHORIZED, detail=JWT_EXPIRED_MSG
             )
-
     except Exception as e:
         print(f"Error checking JWT: {e}")
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
