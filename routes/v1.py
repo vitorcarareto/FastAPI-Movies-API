@@ -26,6 +26,24 @@ async def get_user(user_id: int, user: User = Depends(check_jwt_token)):
 
     raise HTTPException(status_code=HTTP_404_NOT_FOUND)
 
+@app.patch('/users/{user_id}/role', response_model=User, tags=['Users'])
+async def patch_user(user_id: int, value: str = Body(..., embed=True), user: User = Depends(check_jwt_token)):
+    validate_admin(user)  # As an user with admin role I want to be able to change the role of any user.
+
+    user = await db_get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND)
+
+    try:
+        role = Role(value)
+    except Exception as e:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+
+    if user.role != role.value:  # No need to access the database if the value did not change.
+        user = await db_update_user(user_id, field_name='role', value=value)
+
+    return user
+
 
 @app.post('/movies', status_code=HTTP_201_CREATED, response_model=Movie, tags=['Movies'])
 async def post_movie(movie: Movie, user: User = Depends(check_jwt_token)):

@@ -43,6 +43,23 @@ async def db_insert_user(user: User):
         print(f"Already exists: {e}")
 
 
+async def db_update_user(user_id: int, field_name: str, value):
+    values = {"value": value, "user_id": user_id}
+    query = f"""
+        update users
+        set {field_name} = :value
+        where id = :user_id
+        returning id
+    """
+
+    try:
+        user_id = await execute(query, False, values)
+        db_user = await db_get_user_by_id(user_id)
+        return db_user
+    except Exception as e:
+        print(f"Error updating user {user_id}: {e}")
+
+
 async def db_get_movie(movie_id: int):
     query = """
         select * from movies
@@ -72,7 +89,6 @@ async def db_get_movies(sort: str, order: str, limit: int, offset: int, availabi
     result = await fetch(query, False, values=None)
     exists = bool(result)
     return result if exists else False
-
 
 
 async def db_insert_movie(movie: Movie):
