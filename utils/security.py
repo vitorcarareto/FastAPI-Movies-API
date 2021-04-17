@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from starlette.status import HTTP_401_UNAUTHORIZED
 from models.user import User
-from utils.db_functions import db_get_user, db_check_user
+from utils.db_functions import db_get_user
 from utils.const import (
     JWT_EXPIRATION_TIME_MINUTES,
     JWT_ALGORITHM,
@@ -18,6 +18,7 @@ from utils.const import (
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 oauth_schema = OAuth2PasswordBearer(tokenUrl='/login')
+optional_oauth_schema = OAuth2PasswordBearer(tokenUrl='/login', auto_error=False)
 
 
 def get_hashed_password(password):
@@ -57,18 +58,19 @@ def create_jwt_token(user: User):
     return jwt_token
 
 
-async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
-    """ Check whether JWT token is correct """
+async def verify_jwt_user(jwt_token: str):
+    """ Verify the user from the JWT token and return it.
+        If user is not found, return None.
+        If the JWT is invalid, raise an exception (expired or malformed).
+    """
+    if not jwt_token:
+        return None
     try:
         jwt_payload = jwt.decode(jwt_token, JWT_SECRET_KEY, algorithms=JWT_ALGORITHM)
         username = jwt_payload.get("sub")
         expiration = jwt_payload.get("exp")
         if time.time() < expiration:
             user = await db_get_user(username)
-            if not user:
-                raise HTTPException(
-                    status_code=HTTP_401_UNAUTHORIZED, detail=JWT_INVALID_MSG
-                )
             return user
         else:
             raise HTTPException(
@@ -77,6 +79,20 @@ async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
     except Exception as e:
         print(f"Error checking JWT: {e}")
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+
+async def check_optional_jwt_token(jwt_token: str = Depends(optional_oauth_schema)):
+    """ Check whether optional JWT token is correct. """
+    user = await verify_jwt_user(jwt_token)
+    return user
+
+async def check_jwt_token(jwt_token: str = Depends(oauth_schema)):
+    """ Check whether JWT token is correct """
+    user = await verify_jwt_user(jwt_token)
+    if not user:
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED, detail=JWT_INVALID_MSG
+        )
+    return user
 
 
 def final_checks(username: str):

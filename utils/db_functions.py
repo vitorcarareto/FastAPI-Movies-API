@@ -1,6 +1,7 @@
 from asyncpg.exceptions import UniqueViolationError
 from utils.db import execute, fetch
 from models.user import User
+from models.movie import Movie
 
 
 async def db_get_user(username: str):
@@ -10,8 +11,8 @@ async def db_get_user(username: str):
     """
     values = {"username": username}
     result = await fetch(query, True, values)
-    user_exists = bool(result)
-    return User(**result) if user_exists else False
+    exists = bool(result)
+    return User(**result) if exists else False
 
 
 async def db_get_user_by_id(user_id: int):
@@ -21,18 +22,8 @@ async def db_get_user_by_id(user_id: int):
     """
     values = {"user_id": user_id}
     result = await fetch(query, True, values)
-    user_exists = bool(result)
-    return User(**result) if user_exists else False
-
-
-async def db_check_user(username: str):
-    query = """
-        select * from users
-        where username = :username
-    """
-    values = {"username": username}
-    result = await fetch(query, True, values)
-    return bool(result)
+    exists = bool(result)
+    return User(**result) if exists else False
 
 
 async def db_insert_user(user: User):
@@ -51,3 +42,51 @@ async def db_insert_user(user: User):
     except UniqueViolationError as e:
         print(f"Already exists: {e}")
 
+
+async def db_get_movie(movie_id: int):
+    query = """
+        select * from movies
+        where id = :movie_id
+    """
+    values = {"movie_id": movie_id}
+    result = await fetch(query, True, values)
+    exists = bool(result)
+    return Movie(**result) if exists else False
+
+
+async def db_get_movies(sort: str, order: str, limit: int, offset: int, availability: bool = None):
+
+    filter = ""
+    if availability is True:
+        filter += "and availability = true"
+    elif availability is False:
+        filter += "and availability = False"
+
+    query = f"""
+        select * from movies
+        where true
+          {filter}
+        order by {sort} {order}, id
+        limit {limit} offset {offset}
+    """
+    result = await fetch(query, False, values=None)
+    exists = bool(result)
+    return result if exists else False
+
+
+
+async def db_insert_movie(movie: Movie):
+    query = """
+        insert into movies (title, description, stock, rental_price, sale_price, availability)
+        values (:title, :description, :stock, :rental_price, :sale_price, :availability)
+        on conflict do nothing
+        returning id
+    """
+    values = movie.dict()
+    values.pop('id', None)
+    try:
+        movie_id = await execute(query, False, values=values)
+        db_movie = await db_get_movie(movie_id)
+        return db_movie
+    except UniqueViolationError as e:
+        print(f"Already exists: {e}")
