@@ -1,3 +1,4 @@
+import json
 from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from utils.db import execute, fetch
 from utils.db_object import db
@@ -72,6 +73,7 @@ async def db_get_movie(movie_id: int):
     values = {"movie_id": movie_id}
     result = await fetch(query, True, values)
     exists = bool(result)
+    result['images'] = json.loads(str(result.get('images') or []))
     return Movie(**result) if exists else False
 
 
@@ -102,8 +104,8 @@ async def db_get_movies(sort: str, order: str, limit: int, offset: int, title: s
 
 async def db_insert_movie(movie: Movie):
     query = """
-        insert into movies (title, description, stock, rental_price, sale_price, availability)
-        values (:title, :description, :stock, :rental_price, :sale_price, :availability)
+        insert into movies (title, description, stock, rental_price, sale_price, availability, images)
+        values (:title, :description, :stock, :rental_price, :sale_price, :availability, :images)
         on conflict do nothing
         returning id
     """
@@ -115,6 +117,8 @@ async def db_insert_movie(movie: Movie):
         return db_movie
     except UniqueViolationError as e:
         print(f"Already exists: {e}")
+    except Exception as e:
+        print(f"Error inserting movie: {e}")
 
 
 async def db_get_order(order_id: int):

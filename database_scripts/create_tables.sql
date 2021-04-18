@@ -19,7 +19,8 @@ create table movies (
   stock integer not null,
   rental_price decimal(10, 2) not null,
   sale_price decimal(10, 2) not null,
-  availability boolean not null
+  availability boolean not null,
+  images text
 );
 
 create table movies_log (

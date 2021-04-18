@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timedelta
 from fastapi import APIRouter, Body, File, Depends, HTTPException
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
@@ -69,6 +70,7 @@ async def patch_user(user_id: int, value: str = Body(..., embed=True), user: Use
 async def post_movie(movie: Movie, user: User = Depends(check_jwt_token)):
     validate_admin(user)  # Only admins can add movies.
     try:
+        movie.images = json.dumps(movie.images)
         movie = await db_insert_movie(movie)
     except Exception as e:
         print(f"Error inserting movie: {e}")

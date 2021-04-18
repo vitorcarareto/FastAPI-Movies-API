@@ -1,5 +1,6 @@
 from decimal import Decimal
 from datetime import datetime
+from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -7,6 +8,7 @@ class Movie(BaseModel):
     id: int = None
     title: str
     description: str
+    images: List[str]
     stock: int = Field(None, gt=0)
     rental_price: Decimal
     sale_price: Decimal
