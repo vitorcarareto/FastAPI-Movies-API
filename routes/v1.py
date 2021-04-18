@@ -121,7 +121,7 @@ async def delete_movie(movie_id: int, user: User = Depends(check_jwt_token)):
     except Exception as e:
         movie = await db_update_movie(movie, 'availability', False)
         message = f"Could not delete movie {movie_id} because it is referenced by other resources. The movie was set to unavailable, but was not deleted."
-        print(message)
+        print(f"{message} {e}")
         return {"message": message}
 
     return {"message": "Deleted successfully."}

@@ -6,7 +6,7 @@ async def execute(query, is_many, values=None):
         returned_value = await db.execute_many(query=query, values=values)
     else:
         returned_value = await db.execute(query=query, values=values)
-    print("Query executed successfully")
+
     return returned_value
 
 
@@ -17,5 +17,4 @@ async def fetch(query, is_one, values):
     else:
         result = await db.fetch_all(query=query, values=values)
         output = [dict(row) for row in result] if result else None
-
     return output

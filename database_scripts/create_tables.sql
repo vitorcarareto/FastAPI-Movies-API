@@ -1,3 +1,9 @@
+drop table if exists interactions;
+drop table if exists orders;
+drop table if exists movies_log;
+drop table if exists movies;
+drop table if exists users;
+
 create table users (
   id bigserial primary key,
   username varchar(200) not null unique,
