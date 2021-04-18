@@ -21,16 +21,26 @@ app = APIRouter()
 @app.post('/users', status_code=HTTP_201_CREATED, response_model=User, response_model_include=["id", "username", "email", "role"], tags=['Users'])
 async def post_user(user: User):
     user.password = get_hashed_password(user.password)
-    user = await db_insert_user(user)
+    try:
+        user = await db_insert_user(user)
+    except Exception as e:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail=str(e))
+
     if not user:
         raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+
     return user
 
 
 @app.get('/users/{user_id}', response_model=User, response_model_include=["id", "username", "email", "role"], tags=['Users'])
 async def get_user(user_id: int, user: User = Depends(check_jwt_token)):
-    if user and user.id == user_id:
+
+    if user.id == user_id:
         return user
+    elif validate_admin(user, raise_exceptions=False):  # Only admins can access other users data
+        db_user = await db_get_user_by_id(user_id)
+        if db_user:
+            return db_user
 
     raise HTTPException(status_code=HTTP_404_NOT_FOUND)
 

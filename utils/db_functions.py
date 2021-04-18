@@ -33,7 +33,7 @@ async def db_insert_user(user: User):
     query = """
         insert into users (username, password, email, role)
         values (:username, :password, :email, :role)
-        on conflict do nothing
+        --on conflict do nothing
         returning id
     """
     values = user.dict()
@@ -44,6 +44,7 @@ async def db_insert_user(user: User):
         return db_user
     except UniqueViolationError as e:
         print(f"Already exists: {e}")
+        raise Exception(e.detail)
 
 
 async def db_update_user(user_id: int, field_name: str, value):
