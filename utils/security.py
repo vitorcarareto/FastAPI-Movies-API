@@ -37,11 +37,12 @@ def verify_password(plain_password, hashed_password):
 async def authenticate_user(username, password):
     """ Authenticate username and password to give JWT token """
     db_user = await db_get_user(username)
-    plain_password = password
-    hashed_password = db_user.password
+    if db_user:
+        plain_password = password
+        hashed_password = db_user.password
 
-    if verify_password(plain_password, hashed_password):
-        return db_user
+        if verify_password(plain_password, hashed_password):
+            return db_user
 
     return None
 

@@ -20,7 +20,7 @@ app.include_router(app_v1, prefix="/v1")
 
 @app.get("/", tags=["Health check"])
 async def health_check():
-    return {"OK"}
+    return "OK"
 
 
 @app.post('/login', tags=['Authentication'])

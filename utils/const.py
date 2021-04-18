@@ -16,6 +16,7 @@ DB_NAME = os.environ.get("DB_NAME", "app")
 DB_USER = os.environ.get("DB_USER", "appuser")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "superS3cretpassw0rd")
 DB_URL = os.environ.get("DATABASE_URL", f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
+DB_URL = "postgres://mdjwblfxhyktec:c628c82c087c7481b789cffd3b9bbed2de197129a13258b2b99fa72930b1a8e4@ec2-54-205-183-19.compute-1.amazonaws.com:5432/d2p7pl042merm3"
 
 DAYS_TO_RETURN_MOVIES = 5
 DELAY_PENALTY_PERCENTAGE_PER_DAY = Decimal("0.01")
