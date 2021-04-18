@@ -1,4 +1,3 @@
-
 create table users (
   id bigserial primary key,
   username varchar(200) not null unique,
@@ -19,7 +18,7 @@ create table movies (
 
 create table movies_log (
   id bigserial primary key,
-  movie_id bigint not null,
+  movie_id bigint not null references movies(id),
   updated_field text not null,
   old_value text not null,
   new_value text not null,
@@ -28,8 +27,8 @@ create table movies_log (
 
 create table orders (
   id bigserial primary key,
-  movie_id bigint not null,
-  user_id bigint not null,
+  movie_id bigint not null references movies(id),
+  user_id bigint not null references users(id),
   amount integer not null,
   price_paid decimal(10, 2) not null,
   order_type text not null,
@@ -41,8 +40,8 @@ create table orders (
 
 create table interactions (
   id bigserial primary key,
-  movie_id bigint not null,
-  user_id bigint not null,
+  movie_id bigint not null references movies(id),
+  user_id bigint not null references users(id),
   interaction_type text not null,
   interaction_datetime timestamp default current_timestamp
 );
