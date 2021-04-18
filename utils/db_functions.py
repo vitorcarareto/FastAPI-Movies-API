@@ -72,13 +72,18 @@ async def db_get_movie(movie_id: int):
     return Movie(**result) if exists else False
 
 
-async def db_get_movies(sort: str, order: str, limit: int, offset: int, availability: bool = None):
+async def db_get_movies(sort: str, order: str, limit: int, offset: int, title: str = None, availability: bool = None):
 
     filter = ""
+    values = {}
     if availability is True:
-        filter += "and availability = true"
+        filter += " and availability = true "
     elif availability is False:
-        filter += "and availability = False"
+        filter += " and availability = false "
+
+    if title:
+        values['title'] = title.replace(' ', '%')
+        filter += " and title ilike '%'|| :title ||'%' "
 
     query = f"""
         select * from movies
@@ -87,7 +92,7 @@ async def db_get_movies(sort: str, order: str, limit: int, offset: int, availabi
         order by {sort} {order}, id
         limit {limit} offset {offset}
     """
-    result = await fetch(query, False, values=None)
+    result = await fetch(query, False, values=values)
     exists = bool(result)
     return result if exists else False
 

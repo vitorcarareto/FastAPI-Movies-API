@@ -57,10 +57,10 @@ async def post_movie(movie: Movie, user: User = Depends(check_jwt_token)):
 
 
 @app.get('/movies', response_model=List[Movie], response_model_include=["id", "title", "stock", "rental_price", "sale_price", "availability"], tags=['Movies'])
-async def get_movies(sort: str = "title", order: str = "asc", limit: int = 10, offset: int = 0, availability: bool = None, user: User = Depends(check_optional_jwt_token)):
+async def get_movies(sort: str = "title", order: str = "asc", limit: int = 10, offset: int = 0, title: str = None, availability: bool = None, user: User = Depends(check_optional_jwt_token)):
     if not validate_admin(user, raise_exceptions=False):
         availability = True  # As an user I’m able to see only the available movies
-    movies = await db_get_movies(sort, order, limit, offset, availability)
+    movies = await db_get_movies(sort, order, limit, offset, title, availability)
     if movies:
         return movies
 
