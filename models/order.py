@@ -3,9 +3,11 @@ from decimal import Decimal
 from enum import Enum
 from pydantic import BaseModel
 
+
 class OrderType(Enum):
     purchase: str = "purchase"
     rental: str = "rental"
+
 
 class Order(BaseModel):
     id: int = None

@@ -2,7 +2,7 @@ from asyncpg.exceptions import UniqueViolationError
 from utils.db import execute, fetch
 from utils.db_object import db
 from models.user import User
-from models.movie import Movie, MovieLog
+from models.movie import Movie
 from models.order import Order
 from models.interaction import Interaction
 
@@ -151,7 +151,7 @@ async def db_update_order(order: Order, values):
 
     try:
         order_id = await execute(query, False, values)  # Update order
-        return order
+        return order_id
     except Exception as e:
         print(f"Error updating order {order.id}: {e}")
 

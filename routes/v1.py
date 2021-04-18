@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-from fastapi import APIRouter, Body, Header, File, Depends, HTTPException
+from fastapi import APIRouter, Body, File, Depends, HTTPException
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
 from typing import List
 from models.user import User, Role
@@ -44,6 +44,7 @@ async def get_user(user_id: int, user: User = Depends(check_jwt_token)):
 
     raise HTTPException(status_code=HTTP_404_NOT_FOUND)
 
+
 @app.patch('/users/{user_id}/role', response_model=User, tags=['Users'])
 async def patch_user(user_id: int, value: str = Body(..., embed=True), user: User = Depends(check_jwt_token)):
     validate_admin(user)  # As an user with admin role I want to be able to change the role of any user.
@@ -55,7 +56,8 @@ async def patch_user(user_id: int, value: str = Body(..., embed=True), user: Use
     try:
         role = Role(value)
     except Exception as e:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+        print(f"Invalid role: {e}")
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Invalid value for role.")
 
     if user.role != role.value:  # No need to access the database if the value did not change.
         user = await db_update_user(user_id, field_name='role', value=value)
@@ -162,7 +164,7 @@ async def patch_order(order_id: int, returned_date: date = Body(..., embed=True)
         order.delay_penalty_paid = round(order.price_paid * DELAY_PENALTY_PERCENTAGE_PER_DAY * delayed_days, 2)
 
     try:
-        order = await db_update_order(order, {"returned_date": order.returned_date, "delay_penalty_paid": order.delay_penalty_paid})
+        await db_update_order(order, {"returned_date": order.returned_date, "delay_penalty_paid": order.delay_penalty_paid})
     except Exception as e:
         print(f"Error inserting order: {e}")
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR)
@@ -177,7 +179,8 @@ async def post_interaction(movie_id: int, type: InteractionType = Body(..., embe
     try:
         interaction_type = InteractionType(type)
     except Exception as e:
-        raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+        print(f"Invalid InteractionType: {e}")
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST, detail="Invalid type.")
 
     interaction = Interaction(**{
         "user_id": user.id,
