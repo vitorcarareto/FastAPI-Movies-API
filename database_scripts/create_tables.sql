@@ -38,3 +38,11 @@ create table orders (
   returned_date date,
   delay_penalty_paid decimal(10, 2)
 );
+
+create table interactions (
+  id bigserial primary key,
+  movie_id bigint not null,
+  user_id bigint not null,
+  interaction_type text not null,
+  interaction_datetime timestamp default current_timestamp
+);

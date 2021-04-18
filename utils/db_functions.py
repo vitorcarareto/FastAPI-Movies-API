@@ -4,6 +4,7 @@ from utils.db_object import db
 from models.user import User
 from models.movie import Movie, MovieLog
 from models.order import Order
+from models.interaction import Interaction
 
 
 async def db_get_user(username: str):
@@ -199,3 +200,17 @@ async def db_delete_movie(movie_id: int):
         return movie_id
     except Exception as e:
         print(f"Error deleting movie {movie_id}: {e}")
+
+
+async def db_insert_interaction(interaction: Interaction):
+    query = """
+        insert into interactions (movie_id,user_id,interaction_type,interaction_datetime)
+        values (:movie_id, :user_id, :interaction_type, :interaction_datetime)
+        on conflict do nothing
+        returning id
+    """
+    values = interaction.dict()
+    values.pop('id', None)
+    interaction_id = await execute(query, False, values=values)
+    interaction.id = interaction_id
+    return interaction

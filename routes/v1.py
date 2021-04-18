@@ -5,11 +5,13 @@ from typing import List
 from models.user import User, Role
 from models.movie import Movie
 from models.order import Order, OrderType
+from models.interaction import Interaction, InteractionType
 from utils.security import check_jwt_token, check_optional_jwt_token, get_hashed_password, validate_admin
 from utils.db_functions import \
     db_get_user_by_id, db_insert_user, db_update_user, \
     db_insert_movie, db_get_movie, db_get_movies, db_update_movie, db_delete_movie, \
     db_get_order, db_insert_order, db_update_order, \
+    db_insert_interaction
 from utils.const import DAYS_TO_RETURN_MOVIES, DELAY_PENALTY_PERCENTAGE_PER_DAY
 
 # app = FastAPI(openapi_prefix='/v1')
@@ -156,3 +158,28 @@ async def patch_order(order_id: int, returned_date: date = Body(..., embed=True)
         raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR)
 
     return order
+
+
+@app.post('/movies/{movie_id}/interaction', response_model=Interaction, tags=['Interactions'])
+async def post_interaction(movie_id: int, type: InteractionType = Body(..., embed=True), user: User = Depends(check_jwt_token)):
+    """ Like movie """
+
+    try:
+        interaction_type = InteractionType(type)
+    except Exception as e:
+        raise HTTPException(status_code=HTTP_400_BAD_REQUEST)
+
+    interaction = Interaction(**{
+        "user_id": user.id,
+        "movie_id": movie_id,
+        "interaction_type": interaction_type,
+        "interaction_datetime": datetime.utcnow(),
+    })
+    interaction.interaction_type = interaction_type.value
+    try:
+        interaction = await db_insert_interaction(interaction)
+    except Exception as e:
+        print(f"Error inserting interaction: {e}")
+        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return interaction
