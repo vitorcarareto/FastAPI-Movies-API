@@ -1,4 +1,4 @@
-from asyncpg.exceptions import UniqueViolationError
+from asyncpg.exceptions import UniqueViolationError, ForeignKeyViolationError
 from utils.db import execute, fetch
 from utils.db_object import db
 from models.user import User
@@ -172,7 +172,7 @@ async def db_update_movie(movie: Movie, field_name: str, new_value):
             log_values = {
                 "movie_id": movie.id,
                 "updated_field": field_name,
-                "old_value": old_value,
+                "old_value": str(old_value),
                 "new_value": str(new_value)
             }
             log_query = """
@@ -199,19 +199,23 @@ async def db_delete_movie(movie_id: int):
     try:
         movie_id = await execute(query, False, values)
         return movie_id
-    except Exception as e:
+    except ForeignKeyViolationError as e:
         print(f"Error deleting movie {movie_id}: {e}")
+        raise Exception(e.detail)
 
 
 async def db_insert_interaction(interaction: Interaction):
     query = """
         insert into interactions (movie_id,user_id,interaction_type,interaction_datetime)
         values (:movie_id, :user_id, :interaction_type, :interaction_datetime)
-        on conflict do nothing
         returning id
     """
     values = interaction.dict()
     values.pop('id', None)
-    interaction_id = await execute(query, False, values=values)
+    try:
+        interaction_id = await execute(query, False, values=values)
+    except ForeignKeyViolationError as e:
+        raise Exception(e.detail)
+
     interaction.id = interaction_id
     return interaction

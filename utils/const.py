@@ -15,8 +15,8 @@ DB_PORT = os.environ.get("DB_PORT", "5432")
 DB_NAME = os.environ.get("DB_NAME", "app")
 DB_USER = os.environ.get("DB_USER", "appuser")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "superS3cretpassw0rd")
-
-DB_URL = os.environ.get("DATABASE_URL", f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}")
+DB_PARAMS = f'?min_size={os.environ.get("DATABASE_MIN_POOL_SIZE", 2)}&max_size={os.environ.get("DATABASE_MAX_POOL_SIZE", 8)}'
+DB_URL = os.environ.get("DATABASE_URL", f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}") + DB_PARAMS
 
 DAYS_TO_RETURN_MOVIES = 5
 DELAY_PENALTY_PERCENTAGE_PER_DAY = Decimal("0.01")

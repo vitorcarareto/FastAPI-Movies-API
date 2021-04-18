@@ -116,7 +116,14 @@ async def delete_movie(movie_id: int, user: User = Depends(check_jwt_token)):
     movie = await db_get_movie(movie_id)
     if not movie:
         raise HTTPException(status_code=HTTP_404_NOT_FOUND)
-    await db_delete_movie(movie_id)
+    try:
+        await db_delete_movie(movie_id)
+    except Exception as e:
+        movie = await db_update_movie(movie, 'availability', False)
+        message = f"Could not delete movie {movie_id} because it is referenced by other resources. The movie was set to unavailable, but was not deleted."
+        print(message)
+        return {"message": message}
+
     return {"message": "Deleted successfully."}
 
 
@@ -193,6 +200,6 @@ async def post_interaction(movie_id: int, type: InteractionType = Body(..., embe
         interaction = await db_insert_interaction(interaction)
     except Exception as e:
         print(f"Error inserting interaction: {e}")
-        raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=HTTP_404_NOT_FOUND)
 
     return interaction
