@@ -3,6 +3,7 @@ from utils.db import execute, fetch
 from utils.db_object import db
 from models.user import User
 from models.movie import Movie, MovieLog
+from models.order import Order
 
 
 async def db_get_user(username: str):
@@ -114,6 +115,45 @@ async def db_insert_movie(movie: Movie):
         print(f"Already exists: {e}")
 
 
+async def db_get_order(order_id: int):
+    query = """
+        select * from orders
+        where id = :order_id
+    """
+    values = {"order_id": order_id}
+    result = await fetch(query, True, values)
+    exists = bool(result)
+    return Order(**result) if exists else False
+
+
+async def db_insert_order(order: Order):
+    query = """
+        insert into orders (movie_id, user_id, amount, price_paid, order_type, order_datetime, expected_return_date)
+        values (:movie_id, :user_id, :amount, :price_paid, :order_type, :order_datetime, :expected_return_date)
+        returning id
+    """
+    values = order.dict(exclude_unset=True)
+    values.pop('id', None)
+    order.id = await execute(query, False, values=values)
+    return order
+
+
+async def db_update_order(order: Order, values):
+    values = order.dict(exclude_unset=True)
+    query = f"""
+        update orders
+        set ({','.join(values.keys())}) = (:{',:'.join(values.keys())})
+        where id = :id
+        returning id
+    """
+
+    try:
+        order_id = await execute(query, False, values)  # Update order
+        return order
+    except Exception as e:
+        print(f"Error updating order {order.id}: {e}")
+
+
 @db.transaction()
 async def db_update_movie(movie: Movie, field_name: str, new_value):
     values = {"value": new_value, "movie_id": movie.id}
@@ -133,7 +173,7 @@ async def db_update_movie(movie: Movie, field_name: str, new_value):
                 "old_value": old_value,
                 "new_value": str(new_value)
             }
-            log_query = f"""
+            log_query = """
                 insert into movies_log (movie_id, updated_field, old_value, new_value)
                 values (:movie_id, :updated_field, :old_value, :new_value)
             """

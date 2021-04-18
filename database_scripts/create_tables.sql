@@ -18,9 +18,23 @@ create table movies (
 );
 
 create table movies_log (
-    movie_id bigint not null,
-    updated_field text not null,
-    old_value text not null,
-    new_value text not null,
-    updated_datetime timestamp default current_timestamp
-)
+  id bigserial primary key,
+  movie_id bigint not null,
+  updated_field text not null,
+  old_value text not null,
+  new_value text not null,
+  updated_datetime timestamp default current_timestamp
+);
+
+create table orders (
+  id bigserial primary key,
+  movie_id bigint not null,
+  user_id bigint not null,
+  amount integer not null,
+  price_paid decimal(10, 2) not null,
+  order_type text not null,
+  order_datetime timestamp default current_timestamp,
+  expected_return_date date,
+  returned_date date,
+  delay_penalty_paid decimal(10, 2)
+);

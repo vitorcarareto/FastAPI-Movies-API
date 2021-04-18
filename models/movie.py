@@ -13,6 +13,7 @@ class Movie(BaseModel):
     availability: bool  # Only admin can modify this field
 
 class MovieLog(BaseModel):
+    id: int = None
     movie_id: int
     updated_field: str
     old_value: str
