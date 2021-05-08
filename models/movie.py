@@ -3,6 +3,10 @@ from datetime import datetime
 from typing import List
 from pydantic import BaseModel, Field
 
+# class MovieImages(BaseModel):
+#     movie_id
+#     image_url or image_base64
+
 
 class Movie(BaseModel):
     id: int = None
